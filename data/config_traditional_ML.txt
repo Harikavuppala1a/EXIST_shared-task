@@ -1,0 +1,26 @@
+**********
+num_runs = 3
+prob_type = "binary"
+poss_word_feats_emb_dict = {'glove': 300, 'elmo': 3072, 'bert':768}
+test_mode = True
+MAX_WORDS_SENT = 35
+RANDOM_STATE = 22
+TEST_RATIO = 0.15
+VALID_RATIO = 0.15
+
+feat_type = 'wordngrams'
+filename = 'EXIST2021_training.tsv'
+filename_map = 'sd_maps.txt'
+
+MODEL_TYPE = "all"
+models = ['svm','logistic_regression','random_forest','GBT']
+filepath = "../saved_13k/word_vecs~elmo/False/"
+MAX_FEATURES = 10000
+n_estimators = 100
+c_linear_SVC = 1.0
+class_weight = "balanced"
+
+res_tsv_filename = "tsv.txt"
+output_folder_name = "results/"
+data_folder_name = "data/"
+save_folder_name = "saved/"
