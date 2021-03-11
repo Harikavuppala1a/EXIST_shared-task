@@ -43,6 +43,8 @@ def classification_model(X_train, X_test, y_train, y_tested, model_type):
     model = get_model(model_type)
     model.fit(X_train,y_train)
     y_pred = model.predict(X_test)
+    # print (y_pred)
+    # print(y_tested)
     return y_pred, y_tested
 
 def get_model(m_type):
@@ -142,7 +144,7 @@ def train(data_dict, conf_dict_com):
     elif conf_dict_com['feat_type'] == "elmo":
         emb_size = conf_dict_com['poss_word_feats_emb_dict']['elmo']
         print("using elmo")
-        elmo_filepath = save_folder_name + 'word_vecs~' + conf_dict_com['feat_type'] + '/'
+        elmo_filepath = save_folder_name + 'word_vecs~' + conf_dict_com['feat_type'] + conf_dict_com['language'] +  '/'
         if not os.path.isfile(elmo_filepath) :
             os.makedirs(elmo_filepath, exist_ok=True)
             elmo = ElmoEmbedder()
@@ -151,7 +153,7 @@ def train(data_dict, conf_dict_com):
         test_features = get_features(len(data_dict['text'][data_dict['test_st_ind']:data_dict['test_en_ind']]),data_dict['test_st_ind'],elmo_filepath)
         
     elif conf_dict_com['feat_type'] == "ling":
-        ling_filepath = conf_dict_com['save_folder_name'] + 'word_vecs~' + conf_dict_com['feat_type'] + '/'
+        ling_filepath = conf_dict_com['save_folder_name'] + 'word_vecs~' + conf_dict_com['feat_type'] + conf_dict_com['language'] + '/'
         if not os.path.isfile(ling_filepath) :
             os.makedirs(ling_filepath, exist_ok=True)
             emotion_embed_dict, neut, sentiment_embed_dict, sen_neut, perma_embed_dict, perma_neut, word_embed_dict, word_neut, ling_word_vec_dim = load_ling_word_vec_dicts(conf_dict_com['data_folder_name'])
@@ -159,11 +161,12 @@ def train(data_dict, conf_dict_com):
         train_features = get_features(data_dict['train_en_ind'],0,ling_filepath)
         test_features = get_features(len(data_dict['text'][data_dict['test_st_ind']:data_dict['test_en_ind']]),data_dict['test_st_ind'],ling_filepath)
 
-    elif conf_dict_com['feat_type'].startswith('bert')
+    elif conf_dict_com['feat_type'].startswith('bert'):
         sent_enc_feat_dict ={}
-        s_filename = ("%ssent_enc_feat~%s.h5" % (conf_dict_com['save_folder_name'], conf_dict_com['feat_type']))
+        s_filename = ("%ssent_enc_feat~%s~%s.h5" % (conf_dict_com['save_folder_name'], conf_dict_com['feat_type'], conf_dict_com['language']))
+        print (s_filename)
         if not os.path.isfile(s_filename):
-            bert_feats = bert_flat_embed_posts(data_dict['text'], conf_dict_com['poss_word_feats_emb_dict'][conf_dict_com['feat_type']])
+            bert_feats = bert_flat_embed_posts(data_dict['text'], conf_dict_com['poss_word_feats_emb_dict']['bert'])
             with h5py.File(s_filename, "w") as hf:
                 hf.create_dataset('feats', data=bert_feats)
         with h5py.File(s_filename, "r") as hf:
@@ -180,12 +183,18 @@ conf_dict_list, conf_dict_com = load_config(sys.argv[1])
 os.makedirs(conf_dict_com["output_folder_name"], exist_ok=True)
 os.makedirs(conf_dict_com["save_folder_name"], exist_ok=True)
 
-tsv_path = conf_dict_com["output_folder_name"] + conf_dict_com["res_tsv_filename"]
+if conf_dict_com['prob_type'] == "multi-class":
+   tsv_path = conf_dict_com["output_folder_name"] + conf_dict_com["res_tsv_mc_filename"]
+else:
+    tsv_path = conf_dict_com["output_folder_name"] + conf_dict_com["res_tsv_b_filename"]
 if os.path.isfile(tsv_path):
     f_tsv = open(tsv_path, 'a')
 else:
     f_tsv = open(tsv_path, 'w')
-    f_tsv.write("feature\tmodel\tavg_f\tavg_p\tavg_r\tavg_ac\tstd_f\ttest_mode\n") 
+    if conf_dict_com['prob_type'] == "multi-class":
+        f_tsv.write("language\tfeature\tmodel\tavg_f_we\tavg_f_ma\tavg_f_mi\tavg_acc\tavg_p_we\tavg_p_ma\tavg_p_mi\tavg_r_we\tavg_r_ma\tavg_r_mi\tstd_f_we\ttest_mode\n") 
+    else:
+        f_tsv.write("language\tfeature\tmodel\tavg_f\tavg_p\tavg_r\tavg_ac\tstd_f\ttest_mode\n") 
 
 def generate_results(train_feat,test_feat,labels,data_testlabs,num_runs,prob_type,NUM_CLASSES,models,conf_dict_com):
     for model_name in models:
@@ -195,16 +204,16 @@ def generate_results(train_feat,test_feat,labels,data_testlabs,num_runs,prob_typ
             pred, true = classification_model(train_feat, test_feat, labels, data_testlabs, model_name)
             metr_dict = calc_metrics_print(pred, true, metr_dict, NUM_CLASSES, prob_type)
         metr_dict = aggregate_metr(metr_dict, num_runs, prob_type)
-        write_results(conf_dict_com['feat_type'],model_name,metr_dict,f_tsv, prob_type,conf_dict_com)
+        write_results(conf_dict_com['language'], conf_dict_com['feat_type'],model_name,metr_dict,f_tsv, prob_type,conf_dict_com)
 
-data_dict = load_data(conf_dict_com['filename'], conf_dict_com['data_folder_name'], conf_dict_com['save_folder_name'], conf_dict_com['TEST_RATIO'], conf_dict_com['VALID_RATIO'], conf_dict_com['RANDOM_STATE'], conf_dict_com['MAX_WORDS_SENT'],conf_dict_com['filename_map'], conf_dict_com['test_mode'])
+data_dict = load_data(conf_dict_com['filename'], conf_dict_com['data_folder_name'], conf_dict_com['save_folder_name'], conf_dict_com['TEST_RATIO'], conf_dict_com['VALID_RATIO'], conf_dict_com['RANDOM_STATE'], conf_dict_com['MAX_WORDS_SENT'],conf_dict_com['filename_map'], conf_dict_com['language'],  conf_dict_com['prob_type'] ,conf_dict_com['test_mode'])
 train_feat, test_feat = train(data_dict,conf_dict_com)
 if conf_dict_com['prob_type'] == "binary":
-    labels_bin =  trans_labels_bin_classi(data_dict['lab'][:data_dict['train_en_ind']])
-    generate_results(train_feat, test_feat,labels_bin[0], data_dict['lab'][data_dict['test_st_ind']:data_dict['test_en_ind']],conf_dict_com["num_runs"],data_dict['prob_type'], data_dict['NUM_CLASSES'],conf_dict_com['models'], conf_dict_com)
+    # labels_bin =  trans_labels_bin_classi(data_dict['lab'][:data_dict['train_en_ind']])
+    generate_results(train_feat, test_feat,data_dict['lab'][:data_dict['train_en_ind']], data_dict['lab'][data_dict['test_st_ind']:data_dict['test_en_ind']],conf_dict_com["num_runs"],data_dict['prob_type'], data_dict['NUM_CLASSES'],conf_dict_com['models'], conf_dict_com)
 else:
-    labels_mc =trans_labels_mc(data_dict['lab'][:data_dict['train_en_ind']], data_dict['NUM_CLASSES'])
-    generate_results(train_feat, test_feat,labels_mc, data_dict['lab'][data_dict['test_st_ind']:data_dict['test_en_ind']],conf_dict_com["num_runs"],data_dict['prob_type'], data_dict['NUM_CLASSES'],conf_dict_com['models'], conf_dict_com)   
+    # labels_mc =trans_labels_mc(data_dict['lab'][:data_dict['train_en_ind']], data_dict['NUM_CLASSES'])
+    generate_results(train_feat, test_feat,data_dict['lab'][:data_dict['train_en_ind']], data_dict['lab'][data_dict['test_st_ind']:data_dict['test_en_ind']],conf_dict_com["num_runs"],data_dict['prob_type'], data_dict['NUM_CLASSES'],conf_dict_com['models'], conf_dict_com)   
 
 timeLapsed = int(time.time() - startTime + 0.5)
 t_str = "%.1f hours = %.1f minutes over %d hours\n" % (hrs, (timeLapsed % 3600)/60.0, int(hrs))

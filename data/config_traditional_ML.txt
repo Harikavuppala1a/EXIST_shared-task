@@ -8,6 +8,7 @@ RANDOM_STATE = 22
 TEST_RATIO = 0.15
 VALID_RATIO = 0.15
 
+lang = "en"
 feat_type = 'wordngrams'
 filename = 'EXIST2021_training.tsv'
 filename_map = 'sd_maps.txt'
@@ -20,7 +21,8 @@ n_estimators = 100
 c_linear_SVC = 1.0
 class_weight = "balanced"
 
-res_tsv_filename = "tsv.txt"
+res_tsv_mc_filename = "tsv_mc.txt"
+res_tsv_b_filename = "tsv_b.txt"
 output_folder_name = "results/"
 data_folder_name = "data/"
 save_folder_name = "saved/"

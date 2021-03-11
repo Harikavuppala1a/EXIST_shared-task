@@ -8,14 +8,14 @@ import pickle
 from nltk import sent_tokenize
 
 
-def load_data(filename, data_path, save_path, test_ratio, valid_ratio, rand_state, max_words_sent, filename_map, test_mode):
-  data_dict_filename = ("%sraw_data~%s~%s~%s~%s~%s~%s~%s.pickle" % (save_path, filename[:-4], test_ratio, valid_ratio, rand_state, max_words_sent, filename_map, test_mode))
+def load_data(filename, data_path, save_path, test_ratio, valid_ratio, rand_state, max_words_sent, filename_map, lang, prob_type,test_mode):
+  data_dict_filename = ("%sraw_data~%s~%s~%s~%s~%s~%s~%s~%s~%s.pickle" % (save_path, filename[:-4], test_ratio, valid_ratio, rand_state, max_words_sent, filename_map, lang, prob_type,test_mode))
   if os.path.isfile(data_dict_filename):
     print("loading input data")
     with open(data_dict_filename, 'rb') as f_data:
         data_dict = pickle.load(f_data)
   else:      
-    cl_in_filename = ("%sraw_data~%s~%s~%s.pickle" % (save_path, filename[:-4], max_words_sent,filename_map[:-4]))
+    cl_in_filename = ("%sraw_data~%s~%s~%s~%s~%s.pickle" % (save_path, filename[:-4], max_words_sent,lang,prob_type,filename_map[:-4]))
     if os.path.isfile(cl_in_filename):
       print("loading cleaned unshuffled input")
       with open(cl_in_filename, 'rb') as f_cl_in:
@@ -24,10 +24,11 @@ def load_data(filename, data_path, save_path, test_ratio, valid_ratio, rand_stat
       conf_map = load_map(data_path + filename_map)
       r_anum = re.compile(r'([^\sa-z0-9.(?)!])+')
       r_white = re.compile(r'[\s.(?)!]+')
-      text = []; label_lists = []; text_sen = []
+      text = []; label_list = []; text_sen = []
       with open(data_path + filename, 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter = '\t')
         for row in reader:
+          # if row['language'] == "es":
           post = str(row['text'])
           row_clean = r_white.sub(' ', r_anum.sub('', post.lower())).strip()
           text.append(row_clean)
@@ -44,16 +45,17 @@ def load_data(filename, data_path, save_path, test_ratio, valid_ratio, rand_stat
             se_list.append(' '.join(words))
           text_sen.append(se_list)
 
-          cat_list = str(row['task1']).split(',')
-          label_ids = list(set([conf_map['LABEL_MAP'][cat] for cat in cat_list]))
-          label_lists.append(label_ids)
+          # cat_list = str(row['task2']).split(',')
+          # label_ids = list(set([conf_map['LABEL_MAP'][cat] for cat in cat_list]))
+          label_id = str(row['task2'])
+          label_list.append(conf_map['LABEL_MAP'][label_id])
 
       print("saving cleaned unshuffled input")
       with open(cl_in_filename, 'wb') as f_cl_in:
-        pickle.dump([text, text_sen, label_lists, conf_map], f_cl_in)
+        pickle.dump([text, text_sen, label_list, conf_map], f_cl_in)
 
     data_dict = {}  
-    data_dict['text'], data_dict['text_sen'], data_dict['lab'] = shuffle(text, text_sen, label_lists, random_state = rand_state)
+    data_dict['text'], data_dict['text_sen'], data_dict['lab'] = shuffle(text, text_sen, label_list, random_state = rand_state)
     train_index = int((1 - test_ratio - valid_ratio)*len(text)+0.5)
     val_index = int((1 - test_ratio)*len(text)+0.5)
 
