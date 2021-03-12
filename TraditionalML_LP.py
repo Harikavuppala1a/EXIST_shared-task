@@ -15,6 +15,12 @@ from bert_serving.client import ConcurrentBertClient
 from nltk.tokenize import TweetTokenizer
 import time
 import h5py
+from sentence_transformers import SentenceTransformer
+import gensim.models as gsm
+from transformers import AutoTokenizer, AutoModelWithLMHead
+
+tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/xlm-r-100langs-bert-base-nli-mean-tokens")
+sent_encoder = SentenceTransformer('xlm-r-100langs-bert-base-nli-mean-tokens')
 
 def get_embedding_weights(filename, sep):
     embed_dict = {}
@@ -113,66 +119,112 @@ def get_features(data, ind, filepath):
         features.append(np.mean(arr, axis=0))
         ind = ind + 1
     return np.asarray(features)
-        
 
-def train(data_dict, conf_dict_com):
+def getEmojiEmbeddings(emojiList,dim=300):
+  e2v = gsm.KeyedVectors.load_word2vec_format('emoji2vec.bin', binary=True)
+  """ Generates an emoji vector by averaging the emoji representation for each emoji. If no emoji returns an empty list of dimension dim"""
+  result = np.zeros(dim)
+  if (len(emojiList) == 0):
+    return result
+  else:
+    embs = None
+    embs = np.mean([e2v[i] for i in emojiList if i in e2v.vocab], axis=0)
+  if np.any(np.isnan(embs)):
+    return result
+  result[:300] = embs
+  return result    
 
-    print (conf_dict_com['feat_type'])
-    if conf_dict_com['feat_type']== "wordngrams":
+def load_features(s_filename):
+    sent_enc_feat_dict = {}
+    with h5py.File(s_filename, "r") as hf:
+        sent_enc_feat_dict['feats'] = hf['feats'][:data_dict['test_en_ind']]
+        train_features = sent_enc_feat_dict['feats'][:data_dict['train_en_ind']]
+        test_features = sent_enc_feat_dict['feats'][data_dict['test_st_ind']:data_dict['test_en_ind']]
+    return train_features,test_features
+
+def train(data_dict, conf_dict_com,feat_type):
+
+    print (feat_type)
+    if feat_type == "wordngrams":
         print("Using word based features")
         tfidf_transformer = TfidfTransformer(norm = 'l2')
         count_vec = CountVectorizer(analyzer="word",max_features = conf_dict_com['MAX_FEATURES'],stop_words='english',ngram_range = (1,2))
-        bow_transformer_train = count_vec.fit_transform(data_dict['text'][0:data_dict['train_en_ind']])
-        bow_transformer_test =count_vec.transform(data_dict['text'][data_dict['test_st_ind']:data_dict['test_en_ind']])
+        bow_transformer_train = count_vec.fit_transform(data_dict['raw_tweet_texts'][0:data_dict['train_en_ind']])
+        bow_transformer_test =count_vec.transform(data_dict['raw_tweet_texts'][data_dict['test_st_ind']:data_dict['test_en_ind']])
         train_features = tfidf_transformer.fit_transform(bow_transformer_train)
         test_features= tfidf_transformer.transform(bow_transformer_test )
         print (train_features.shape)
-    elif conf_dict_com['feat_type'] == "charngrams": 
+    elif feat_type == "charngrams": 
         print("Using char n-grams based features")
         tfidf_transformer = TfidfTransformer(norm = 'l2')
         count_vec = CountVectorizer(analyzer="char",max_features = conf_dict_com['MAX_FEATURES'], ngram_range = (1,5))
-        bow_transformer_train = count_vec.fit_transform(data_dict['text'][0:data_dict['train_en_ind']])
-        bow_transformer_test =count_vec.transform(data_dict['text'][data_dict['test_st_ind']:data_dict['test_en_ind']])
+        bow_transformer_train = count_vec.fit_transform(data_dict['raw_tweet_texts'][0:data_dict['train_en_ind']])
+        bow_transformer_test =count_vec.transform(data_dict['raw_tweet_texts'][data_dict['test_st_ind']:data_dict['test_en_ind']])
         train_features = tfidf_transformer.fit_transform(bow_transformer_train)
-        test_features= tfidf_transformer.transform(bow_transformer_test )         
-    elif conf_dict_com['feat_type'] =="glove":
+        test_features= tfidf_transformer.transform(bow_transformer_test )  
+        print (train_features.shape)       
+    elif feat_type =="glove":
         print("Using glove embeddings")
         emb_size = conf_dict_com['poss_word_feats_emb_dict']['glove']
         emb = get_embeddings_dict(conf_dict_com['feat_type'], emb_size,conf_dict_com["data_folder_name"])
-        train_features = get_gove_features(data_dict['text'][0:data_dict['train_en_ind']],emb,emb_size)
-        test_features = get_glove_features(data_dict['text'][data_dict['test_st_ind']:data_dict['test_en_ind']],emb,emb_size)
-    elif conf_dict_com['feat_type'] == "elmo":
+        train_features = get_gove_features(data_dict['raw_tweet_texts'][0:data_dict['train_en_ind']],emb,emb_size)
+        test_features = get_glove_features(data_dict['raw_tweet_texts'][data_dict['test_st_ind']:data_dict['test_en_ind']],emb,emb_size)
+    elif feat_type == "elmo":
         emb_size = conf_dict_com['poss_word_feats_emb_dict']['elmo']
         print("using elmo")
-        elmo_filepath = save_folder_name + 'word_vecs~' + conf_dict_com['feat_type'] + conf_dict_com['language'] +  '/'
+        elmo_filepath = save_folder_name + 'word_vecs~' + feat_type + conf_dict_com['language'] +  '/'
         if not os.path.isfile(elmo_filepath) :
             os.makedirs(elmo_filepath, exist_ok=True)
             elmo = ElmoEmbedder()
             elmo_save_no_pad(data_dict, elmo, elmo_filepath, poss_word_feats_emb_dict[word_feat_name])
         train_features = get_features(data_dict['train_en_ind'],0,elmo_filepath)
-        test_features = get_features(len(data_dict['text'][data_dict['test_st_ind']:data_dict['test_en_ind']]),data_dict['test_st_ind'],elmo_filepath)
+        test_features = get_features(len(data_dict['raw_tweet_texts'][data_dict['test_st_ind']:data_dict['test_en_ind']]),data_dict['test_st_ind'],elmo_filepath)
         
-    elif conf_dict_com['feat_type'] == "ling":
-        ling_filepath = conf_dict_com['save_folder_name'] + 'word_vecs~' + conf_dict_com['feat_type'] + conf_dict_com['language'] + '/'
+    elif feat_type == "ling":
+        ling_filepath = conf_dict_com['save_folder_name'] + 'word_vecs~' + feat_type + conf_dict_com['language'] + '/'
         if not os.path.isfile(ling_filepath) :
             os.makedirs(ling_filepath, exist_ok=True)
             emotion_embed_dict, neut, sentiment_embed_dict, sen_neut, perma_embed_dict, perma_neut, word_embed_dict, word_neut, ling_word_vec_dim = load_ling_word_vec_dicts(conf_dict_com['data_folder_name'])
-            ling_word_feat_posts(data_dict['text'], data_dict['max_post_length'], emotion_embed_dict, neut, sentiment_embed_dict, sen_neut, perma_embed_dict, perma_neut, word_embed_dict, word_neut, ling_word_vec_dim, ling_filepath)
+            ling_word_feat_posts(data_dict['raw_tweet_texts'], data_dict['max_post_length'], emotion_embed_dict, neut, sentiment_embed_dict, sen_neut, perma_embed_dict, perma_neut, word_embed_dict, word_neut, ling_word_vec_dim, ling_filepath)
         train_features = get_features(data_dict['train_en_ind'],0,ling_filepath)
-        test_features = get_features(len(data_dict['text'][data_dict['test_st_ind']:data_dict['test_en_ind']]),data_dict['test_st_ind'],ling_filepath)
+        test_features = get_features(len(data_dict['raw_tweet_texts'][data_dict['test_st_ind']:data_dict['test_en_ind']]),data_dict['test_st_ind'],ling_filepath)
 
-    elif conf_dict_com['feat_type'].startswith('bert'):
+    elif feat_type.startswith('bert'):
         sent_enc_feat_dict ={}
-        s_filename = ("%ssent_enc_feat~%s~%s.h5" % (conf_dict_com['save_folder_name'], conf_dict_com['feat_type'], conf_dict_com['language']))
+        s_filename = ("%ssent_enc_feat~%s~%s.h5" % (conf_dict_com['save_folder_name'], feat_type, conf_dict_com['language']))
         print (s_filename)
         if not os.path.isfile(s_filename):
-            bert_feats = bert_flat_embed_posts(data_dict['text'], conf_dict_com['poss_word_feats_emb_dict']['bert'])
+            bert_feats = bert_flat_embed_posts(data_dict['raw_tweet_texts'], conf_dict_com['poss_word_feats_emb_dict']['bert'])
             with h5py.File(s_filename, "w") as hf:
                 hf.create_dataset('feats', data=bert_feats)
-        with h5py.File(s_filename, "r") as hf:
-            sent_enc_feat_dict['feats'] = hf['feats'][:data_dict['test_en_ind']]
-            train_features = sent_enc_feat_dict['feats'][:data_dict['train_en_ind']]
-            test_features = sent_enc_feat_dict['feats'][data_dict['test_st_ind']:data_dict['test_en_ind']]
+        train_features,test_features = load_features(s_filename)
+    elif feat_type == "emoji":
+        sent_enc_feat_dict ={}
+        s_filename = ("%semoji_enc_feat~%s.h5" % (conf_dict_com['save_folder_name'], conf_dict_com['language']))
+        if not os.path.isfile(s_filename):
+            emoji_feats = np.asarray([getEmojiEmbeddings(i) for i in (data_dict['emojis'])])
+            with h5py.File(s_filename, "w") as hf:
+                hf.create_dataset('feats', data=emoji_feats)
+        train_features,test_features = load_features(s_filename)
+    elif feat_type == "hashtags":
+        sent_enc_feat_dict ={}
+        s_filename = ("%shashtags_enc_feat~%s.h5" % (conf_dict_com['save_folder_name'],conf_dict_com['language']))
+        if not os.path.isfile(s_filename):
+            seg_hashtag =[]
+            for hashtag in data_dict['segmented_hashtags']:
+                seg_hashtag.append(' '.join(hashtag))
+            hash_feat = sent_encoder.encode(seg_hashtag)
+            with h5py.File(s_filename, "w") as hf:
+                hf.create_dataset('feats', data=hash_feat)
+        train_features,test_features = load_features(s_filename)
+    elif feat_type == "xmr":
+        sent_enc_feat_dict ={}
+        s_filename = ("%ssent_enc_feat~%s~%s.h5" % (conf_dict_com['save_folder_name'], feat_type, conf_dict_com['language']))
+        if not os.path.isfile(s_filename):
+            xmr_feat = sent_encoder.encode(data_dict['raw_tweet_texts'])
+            with h5py.File(s_filename, "w") as hf:
+                hf.create_dataset('feats', data=xmr_feat)
+        train_features,test_features = load_features(s_filename)
 
     return train_features, test_features
 
@@ -196,7 +248,7 @@ else:
     else:
         f_tsv.write("language\tfeature\tmodel\tavg_f\tavg_p\tavg_r\tavg_ac\tstd_f\ttest_mode\n") 
 
-def generate_results(train_feat,test_feat,labels,data_testlabs,num_runs,prob_type,NUM_CLASSES,models,conf_dict_com):
+def generate_results(train_feat,test_feat,labels,data_testlabs,num_runs,prob_type,NUM_CLASSES,models,conf_dict_com,feat_type_str):
     for model_name in models:
         print (model_name)
         metr_dict = init_metr_dict(prob_type)
@@ -204,16 +256,27 @@ def generate_results(train_feat,test_feat,labels,data_testlabs,num_runs,prob_typ
             pred, true = classification_model(train_feat, test_feat, labels, data_testlabs, model_name)
             metr_dict = calc_metrics_print(pred, true, metr_dict, NUM_CLASSES, prob_type)
         metr_dict = aggregate_metr(metr_dict, num_runs, prob_type)
-        write_results(conf_dict_com['language'], conf_dict_com['feat_type'],model_name,metr_dict,f_tsv, prob_type,conf_dict_com)
+        write_results(conf_dict_com['language'], feat_type_str,model_name,metr_dict,f_tsv, prob_type,conf_dict_com)
 
-data_dict = load_data(conf_dict_com['filename'], conf_dict_com['data_folder_name'], conf_dict_com['save_folder_name'], conf_dict_com['TEST_RATIO'], conf_dict_com['VALID_RATIO'], conf_dict_com['RANDOM_STATE'], conf_dict_com['MAX_WORDS_SENT'],conf_dict_com['filename_map'], conf_dict_com['language'],  conf_dict_com['prob_type'] ,conf_dict_com['test_mode'])
-train_feat, test_feat = train(data_dict,conf_dict_com)
+data_dict = load_data(conf_dict_com['filename'], conf_dict_com['data_folder_name'], conf_dict_com['save_folder_name'], conf_dict_com['TEST_RATIO'], conf_dict_com['VALID_RATIO'], conf_dict_com['RANDOM_STATE'],conf_dict_com['filename_map_list'], conf_dict_com['language'],  conf_dict_com['prob_type'] ,conf_dict_com['test_mode'])
+
+feat_type_str = ""
+train_feat, test_feat = train(data_dict,conf_dict_com,conf_dict_com['feat_type_list'][0])
+print (train_feat.shape)
+feat_type_str = feat_type_str + conf_dict_com['feat_type_list'][0]
+if len(conf_dict_com['feat_type_list']) >1:
+    for feat_type in conf_dict_com['feat_type_list'][1:]:
+        feat_type_str = feat_type_str + feat_type
+        train_features, test_features = train(data_dict,conf_dict_com,feat_type)
+        train_feat = np.concatenate((train_feat , train_features), axis = 1)
+        test_feat = np.concatenate((test_feat , test_features), axis = 1)
+        print (train_feat.shape)
+        print(test_feat.shape)
+
 if conf_dict_com['prob_type'] == "binary":
-    # labels_bin =  trans_labels_bin_classi(data_dict['lab'][:data_dict['train_en_ind']])
-    generate_results(train_feat, test_feat,data_dict['lab'][:data_dict['train_en_ind']], data_dict['lab'][data_dict['test_st_ind']:data_dict['test_en_ind']],conf_dict_com["num_runs"],data_dict['prob_type'], data_dict['NUM_CLASSES'],conf_dict_com['models'], conf_dict_com)
+    generate_results(train_feat, test_feat,data_dict['task_1_labels'][:data_dict['train_en_ind']], data_dict['task_1_labels'][data_dict['test_st_ind']:data_dict['test_en_ind']],conf_dict_com["num_runs"],conf_dict_com['prob_type'], data_dict['NUM_CLASSES'],conf_dict_com['models'], conf_dict_com,feat_type_str)
 else:
-    # labels_mc =trans_labels_mc(data_dict['lab'][:data_dict['train_en_ind']], data_dict['NUM_CLASSES'])
-    generate_results(train_feat, test_feat,data_dict['lab'][:data_dict['train_en_ind']], data_dict['lab'][data_dict['test_st_ind']:data_dict['test_en_ind']],conf_dict_com["num_runs"],data_dict['prob_type'], data_dict['NUM_CLASSES'],conf_dict_com['models'], conf_dict_com)   
+    generate_results(train_feat, test_feat,data_dict['task_2_labels'][:data_dict['train_en_ind']], data_dict['task_2_labels'][data_dict['test_st_ind']:data_dict['test_en_ind']],conf_dict_com["num_runs"],conf_dict_com['prob_type'], data_dict['NUM_CLASSES'],conf_dict_com['models'], conf_dict_com,feat_type_str)   
 
 timeLapsed = int(time.time() - startTime + 0.5)
 t_str = "%.1f hours = %.1f minutes over %d hours\n" % (hrs, (timeLapsed % 3600)/60.0, int(hrs))
