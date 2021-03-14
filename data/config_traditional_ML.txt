@@ -8,10 +8,10 @@ RANDOM_STATE = 22
 TEST_RATIO = 0.15
 VALID_RATIO = 0.15
 
-lang = "en"
+lang = "both"
 feat_type = 'wordngrams'
 filename = 'EXIST2021_training.tsv'
-filename_map = 'sd_maps.txt'
+filename_map_list = ['sd_maps.txt', 'sc_maps.txt'
 
 MODEL_TYPE = "all"
 models = ['svm','logistic_regression','random_forest','GBT']
