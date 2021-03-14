@@ -1,0 +1,30 @@
+prob_type = 'multi-class'
+----------
+FOR_LMAP = {
+  0: 'Ideological-inequality',
+  
+  1: 'Stereotyping-dominance',
+  
+  2: 'Objectification',
+
+  3: 'Sexual-violence',
+
+  4: 'Misogyny-non-sexual-violence',
+
+  5: 'Non-sexist'
+}
+----------
+LABEL_MAP = {
+  'ideological-inequality': 0,
+  
+  'stereotyping-dominance': 1,
+  
+  'objectification': 2,
+
+  'sexual-violence': 3,
+  
+  'misogyny-non-sexual-violence': 4,
+
+  'non-sexist': 5
+  }
+

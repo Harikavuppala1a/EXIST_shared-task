@@ -274,9 +274,9 @@ if len(conf_dict_com['feat_type_list']) >1:
         print(test_feat.shape)
 
 if conf_dict_com['prob_type'] == "binary":
-    generate_results(train_feat, test_feat,data_dict['task_1_labels'][:data_dict['train_en_ind']], data_dict['task_1_labels'][data_dict['test_st_ind']:data_dict['test_en_ind']],conf_dict_com["num_runs"],conf_dict_com['prob_type'], data_dict['NUM_CLASSES'],conf_dict_com['models'], conf_dict_com,feat_type_str)
+    generate_results(train_feat, test_feat,data_dict['task_1_labels'][:data_dict['train_en_ind']], data_dict['task_1_labels'][data_dict['test_st_ind']:data_dict['test_en_ind']],conf_dict_com["num_runs"],conf_dict_com['prob_type'], data_dict['NUM_CLASSES_sd'],conf_dict_com['models'], conf_dict_com,feat_type_str)
 else:
-    generate_results(train_feat, test_feat,data_dict['task_2_labels'][:data_dict['train_en_ind']], data_dict['task_2_labels'][data_dict['test_st_ind']:data_dict['test_en_ind']],conf_dict_com["num_runs"],conf_dict_com['prob_type'], data_dict['NUM_CLASSES'],conf_dict_com['models'], conf_dict_com,feat_type_str)   
+    generate_results(train_feat, test_feat,data_dict['task_2_labels'][:data_dict['train_en_ind']], data_dict['task_2_labels'][data_dict['test_st_ind']:data_dict['test_en_ind']],conf_dict_com["num_runs"],conf_dict_com['prob_type'], data_dict['NUM_CLASSES_sc'],conf_dict_com['models'], conf_dict_com,feat_type_str)   
 
 timeLapsed = int(time.time() - startTime + 0.5)
 t_str = "%.1f hours = %.1f minutes over %d hours\n" % (hrs, (timeLapsed % 3600)/60.0, int(hrs))

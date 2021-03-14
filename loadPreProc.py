@@ -129,7 +129,7 @@ def load_data(filename, data_path, save_path, test_ratio, valid_ratio, rand_stat
 
     # data_dict['max_num_sent'] = max([len(post_sen) for post_sen in data_dict['text_sen'][:val_index]])
     data_dict['max_post_length'] = max([len(post.split(' ')) for post in data_dict['tweets'][:val_index]])
-    # data_dict['max_words_sent'] = max_words_sent
+    data_dict['max_words_sent'] = 35
 
     if test_mode:
       data_dict['train_en_ind'] = val_index
@@ -139,10 +139,17 @@ def load_data(filename, data_path, save_path, test_ratio, valid_ratio, rand_stat
       data_dict['test_en_ind'] = val_index
     data_dict['test_st_ind'] = data_dict['train_en_ind']
 
-    data_dict['FOR_LMAP'] = conf_map['FOR_LMAP']
-    data_dict['LABEL_MAP'] = conf_map['LABEL_MAP']
-    data_dict['NUM_CLASSES'] = len(data_dict['FOR_LMAP'])
-    data_dict['prob_type'] = conf_map['prob_type']
+    data_dict['FOR_LMAP_sd'] = conf_map['FOR_LMAP']
+    data_dict['LABEL_MAP_sd'] = conf_map['LABEL_MAP']
+    data_dict['NUM_CLASSES_sd'] = len(data_dict['FOR_LMAP_sd'])
+    data_dict['prob_type_sd'] = conf_map['prob_type']
+
+    data_dict['FOR_LMAP_sc'] = conf_map1['FOR_LMAP']
+    data_dict['LABEL_MAP_sc'] = conf_map1['LABEL_MAP']
+    data_dict['NUM_CLASSES_sc'] = len(data_dict['FOR_LMAP_sc'])
+    data_dict['prob_type_sc'] = conf_map1['prob_type']
+
+    data_dict['max_num_sent'] = 5
 
     print("saving input data")
     with open(data_dict_filename, 'wb') as f_data:
@@ -199,4 +206,7 @@ def load_config(filename):
 
   print("config loaded")
   return conf_dict_list, conf_dict_com
+
+def trans_labels_bin_classi(org_lables):
+    return [np.array([l for l in org_lables], dtype=np.int64)]
 

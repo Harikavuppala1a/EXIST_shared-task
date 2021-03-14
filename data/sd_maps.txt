@@ -1,0 +1,13 @@
+prob_type = 'binary'
+----------
+FOR_LMAP = {
+  0: 'non-sexist',
+  
+  1: 'sexist'
+}
+----------
+LABEL_MAP = {
+  'sexist': 1,
+  
+  'non-sexist': 0
+  }
