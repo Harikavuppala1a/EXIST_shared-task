@@ -1,4 +1,7 @@
 from bert_serving.client import ConcurrentBertClient
+import h5py
+import gensim.models as gsm
+
 
 
 def getEmojiEmbeddings(emojiList,dim=300):

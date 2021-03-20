@@ -6,6 +6,8 @@ from word_embed import word_featurize
 from neural_approaches import *
 from bert_serving.client import ConcurrentBertClient
 import h5py
+import gensim.models as gsm
+
 # from TraditionalML_LP import save_emojifeats, save_hashfeats
 
 sys.setrecursionlimit(10000)
@@ -16,7 +18,6 @@ import tensorflow as tf
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 set_session(tf.Session(config=config))
-import gensim.models as gsm
 
 conf_dict_list, conf_dict_com = load_config(sys.argv[1])
 
