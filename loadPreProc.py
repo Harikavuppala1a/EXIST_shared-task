@@ -41,6 +41,7 @@ def load_data(filename, data_path, save_path, test_ratio, valid_ratio, rand_stat
   ID = []
   source =[]
   language = []
+  original_text  = []
 
   raw_tweet_texts = []
   tokenized_tweets = []
@@ -52,7 +53,11 @@ def load_data(filename, data_path, save_path, test_ratio, valid_ratio, rand_stat
   numbers = []
   reserveds = []
   text_case = []
-  data_dict = {}  
+  clean_data = []
+  data_dict = {}
+
+  r_anum = re.compile(r'([^\sa-z0-9.(?)!])+')
+  r_white = re.compile(r'[\s.(?)!]+')  
 
   seg_tw = Segmenter(corpus = "twitter")
   data_dict_filename = ("%sraw_data~%s~%s~%s~%s~%s~%s~%s~%s.pickle" % (save_path, filename[:-4], test_ratio, valid_ratio, rand_state, filename_map_list, lang, prob_type,test_mode))
@@ -61,12 +66,6 @@ def load_data(filename, data_path, save_path, test_ratio, valid_ratio, rand_stat
     with open(data_dict_filename, 'rb') as f_data:
         data_dict = pickle.load(f_data)
   else:      
-    # cl_in_filename = ("%sraw_data~%s~%s~%s~%s~%s.pickle" % (save_path, filename[:-4], max_words_sent,lang,prob_type,filename_map[:-4]))
-    # if os.path.isfile(cl_in_filename):
-    #   print("loading cleaned unshuffled input")
-    #   with open(cl_in_filename, 'rb') as f_cl_in:
-    #       text, text_sen, label_lists, conf_map = pickle.load(f_cl_in)
-    # else:
     conf_map = load_map(data_path + filename_map_list[0])
     conf_map1 = load_map(data_path + filename_map_list[1])
     
@@ -81,7 +80,8 @@ def load_data(filename, data_path, save_path, test_ratio, valid_ratio, rand_stat
         task_2_labels.append(conf_map1['LABEL_MAP'][str(row['task2'])])
         ID.append(row['id'])
         tweets.append(row['text'].replace("\n", " "))
-
+        row_clean = r_white.sub(' ', r_anum.sub('', row['text'].lower())).strip()
+        
         parse_obj = tweet_proc.parse(row['text'].replace("\n", " "))
         tokenized_tweets.append(tweet_proc.tokenize(row['text'].replace("\n", " ")))
         hashtags.append(strip_list(make_list(parse_obj.hashtags)))
@@ -93,7 +93,7 @@ def load_data(filename, data_path, save_path, test_ratio, valid_ratio, rand_stat
         reserveds.append(strip_list(make_list(parse_obj.reserved)))
 
         raw_tweet_texts.append(tweet_proc.clean(row['text'].replace("\n", " ")))
-
+        clean_data.append(row_clean)
         emoji_texts = []
 
         for emo_list in emojis:
@@ -114,16 +114,9 @@ def load_data(filename, data_path, save_path, test_ratio, valid_ratio, rand_stat
             # removing the hash symbol
             segmented_set.append(seg_tw.segment(word))
           segmented_hashtags.append(segmented_set)
-            # cat_list = str(row['task2']).split(',')
-            # label_ids = list(set([conf_map['LABEL_MAP'][cat] for cat in cat_list]))
-            # label_id = str(row['task2'])
-            # label_list.append(conf_map['LABEL_MAP'][label_id])
+            
 
-        # print("saving cleaned unshuffled input")
-        # with open(cl_in_filename, 'wb') as f_cl_in:
-        #   pickle.dump([text, text_sen, label_list, conf_map], f_cl_in)
-
-    data_dict['text_case'], data_dict['source'], data_dict['language'],data_dict['task_1_labels'], data_dict['task_2_labels'],data_dict['ID'], data_dict['tweets'], data_dict['tokenized_tweets'], data_dict['hashtags'], data_dict['smileys'], data_dict['emojis'], data_dict['urls'], data_dict['mentions'], data_dict['numbers'], data_dict['reserveds'], data_dict['raw_tweet_texts'],data_dict['emoji_texts'], data_dict['segmented_hashtags'] = shuffle(text_case, source, language, task_1_labels, task_2_labels, ID, tweets, tokenized_tweets, hashtags, smileys,emojis, urls, mentions, numbers, reserveds, raw_tweet_texts,emoji_texts, segmented_hashtags, random_state = rand_state)
+    data_dict['clean_data'], data_dict['text_case'], data_dict['source'], data_dict['language'],data_dict['task_1_labels'], data_dict['task_2_labels'],data_dict['ID'], data_dict['tweets'], data_dict['tokenized_tweets'], data_dict['hashtags'], data_dict['smileys'], data_dict['emojis'], data_dict['urls'], data_dict['mentions'], data_dict['numbers'], data_dict['reserveds'], data_dict['raw_tweet_texts'],data_dict['emoji_texts'], data_dict['segmented_hashtags'] = shuffle(clean_data, text_case, source, language, task_1_labels, task_2_labels, ID, tweets, tokenized_tweets, hashtags, smileys,emojis, urls, mentions, numbers, reserveds, raw_tweet_texts,emoji_texts, segmented_hashtags, random_state = rand_state)
     train_index = int((1 - test_ratio - valid_ratio)*len(tweets)+0.5)
     val_index = int((1 - test_ratio)*len(tweets)+0.5)
 
@@ -209,4 +202,44 @@ def load_config(filename):
 
 def trans_labels_bin_classi(org_lables):
     return [np.array([l for l in org_lables], dtype=np.int64)]
+def bin_classi_op_to_label_lists(vec):
+  return [[x] for x in vec]
+
+def binary_to_decimal(b_list):
+  out1 = 0
+  for bit in b_list:
+    out1 = (out1 << 1) | bit
+  return out1
+  
+def map_labels_to_num(label_ids, NUM_CLASSES):
+  arr = [0] * NUM_CLASSES
+  for label_id in label_ids:
+    arr[label_id] = 1
+  num = binary_to_decimal(arr) 
+  return num
+
+def fit_trans_labels_powerset(org_lables, NUM_CLASSES):
+  ind = 0
+  for_map = {}
+  bac_map = {}
+  new_labels = np.empty(len(org_lables), dtype=np.int64)
+  for s_ind, label_ids in enumerate(org_lables):
+    l = map_labels_to_num(label_ids, NUM_CLASSES)
+    if l not in for_map:
+      for_map[l] = ind
+      bac_map[ind] = l
+      ind += 1
+    new_labels[s_ind] = for_map[l]
+  num_lp_classes = ind
+  return new_labels, num_lp_classes, bac_map, for_map
+
+def powerset_vec_to_label_lists(vec, bac_map, NUM_CLASSES):
+  return [num_to_label_list(bac_map[x], NUM_CLASSES) for x in vec]
+
+def num_to_label_list(num, NUM_CLASSES):
+  f_str = ("%sb" % NUM_CLASSES)
+  return [ind for ind, x in enumerate(format(num, f_str)) if x == '1']
+
+def trans_labels_multi_classi(org_lables):
+  return np.array([l[0] for l in org_lables], dtype=np.int64)
 

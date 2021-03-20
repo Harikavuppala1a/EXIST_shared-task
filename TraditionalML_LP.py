@@ -142,6 +142,19 @@ def load_features(s_filename):
         test_features = sent_enc_feat_dict['feats'][data_dict['test_st_ind']:data_dict['test_en_ind']]
     return train_features,test_features
 
+def save_emojifeats(data_dict,s_filename):
+    emoji_feats = np.asarray([getEmojiEmbeddings(i) for i in (data_dict['emojis'])])
+    with h5py.File(s_filename, "w") as hf:
+        hf.create_dataset('feats', data=emoji_feats)
+
+def save_hashfeats(data_dict,s_filename):
+    seg_hashtag =[]
+    for hashtag in data_dict['segmented_hashtags']:
+        seg_hashtag.append(' '.join(hashtag))
+    hash_feat = sent_encoder.encode(seg_hashtag)
+    with h5py.File(s_filename, "w") as hf:
+        hf.create_dataset('feats', data=hash_feat)
+
 def train(data_dict, conf_dict_com,feat_type):
 
     print (feat_type)
@@ -199,23 +212,14 @@ def train(data_dict, conf_dict_com,feat_type):
                 hf.create_dataset('feats', data=bert_feats)
         train_features,test_features = load_features(s_filename)
     elif feat_type == "emoji":
-        sent_enc_feat_dict ={}
         s_filename = ("%semoji_enc_feat~%s.h5" % (conf_dict_com['save_folder_name'], conf_dict_com['language']))
         if not os.path.isfile(s_filename):
-            emoji_feats = np.asarray([getEmojiEmbeddings(i) for i in (data_dict['emojis'])])
-            with h5py.File(s_filename, "w") as hf:
-                hf.create_dataset('feats', data=emoji_feats)
+            save_emojifeats(data_dict,s_filename)
         train_features,test_features = load_features(s_filename)
     elif feat_type == "hashtags":
-        sent_enc_feat_dict ={}
         s_filename = ("%shashtags_enc_feat~%s.h5" % (conf_dict_com['save_folder_name'],conf_dict_com['language']))
         if not os.path.isfile(s_filename):
-            seg_hashtag =[]
-            for hashtag in data_dict['segmented_hashtags']:
-                seg_hashtag.append(' '.join(hashtag))
-            hash_feat = sent_encoder.encode(seg_hashtag)
-            with h5py.File(s_filename, "w") as hf:
-                hf.create_dataset('feats', data=hash_feat)
+            save_hashfeats(data_dict,s_filename)
         train_features,test_features = load_features(s_filename)
     elif feat_type == "xmr":
         sent_enc_feat_dict ={}
