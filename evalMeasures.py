@@ -72,11 +72,11 @@ def prep_write_lines(metr_dict, prob_type):
 		]
 	return lines
 
-def write_results(lang,original_text,classimb,feat_type,model_name,use_emotions, use_hashtags, metr_dict, f_tsv, prob_type, conf_dict_com,rnn_dim,att_dim):
+def write_results(lang,original_text,classimb,feat_type,model_name,use_emotions, use_hashtags, use_empath, use_perspective, use_hurtlex, metr_dict, f_tsv, prob_type, conf_dict_com,rnn_dim,att_dim):
 	if prob_type == 'multi-class':
-		f_tsv.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%s\t%.3f\t%.3f\t%.3f\n" % (lang,original_text, classimb, feat_type ,model_name,use_emotions, use_hashtags,rnn_dim,att_dim, metr_dict['avg_f_we'],metr_dict['avg_f_ma'],metr_dict['avg_f_mi'],metr_dict['avg_acc'],metr_dict['avg_p_we'],metr_dict['avg_p_ma'],metr_dict['avg_p_mi'],metr_dict['avg_r_we'],metr_dict['avg_r_ma'],metr_dict['avg_r_mi'],metr_dict['std_f_we'],conf_dict_com["test_mode"], conf_dict_com['LEARN_RATE'], conf_dict_com['dropO1'], conf_dict_com['dropO2']))
+		f_tsv.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%s\t%.3f\t%.3f\t%.3f\n" % (lang,original_text, classimb, feat_type ,model_name,use_emotions, use_hashtags, use_empath,use_perspective, use_hurtlex, rnn_dim,att_dim, metr_dict['avg_f_we'],metr_dict['avg_f_ma'],metr_dict['avg_f_mi'],metr_dict['avg_acc'],metr_dict['avg_p_we'],metr_dict['avg_p_ma'],metr_dict['avg_p_mi'],metr_dict['avg_r_we'],metr_dict['avg_r_ma'],metr_dict['avg_r_mi'],metr_dict['std_f_we'],conf_dict_com["test_mode"], conf_dict_com['LEARN_RATE'], conf_dict_com['dropO1'], conf_dict_com['dropO2']))
 	elif prob_type == 'binary':
-		f_tsv.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%s\t%.3f\t%.3f\t%.3f\n" % (lang, original_text, classimb, feat_type,model_name,use_emotions, use_hashtags,rnn_dim,att_dim, metr_dict['avg_f'],metr_dict['avg_p'],metr_dict['avg_r'],metr_dict['avg_acc'],metr_dict['std_f'],metr_dict['std_acc'],conf_dict_com["test_mode"], conf_dict_com['LEARN_RATE'], conf_dict_com['dropO1'], conf_dict_com['dropO2']))
+		f_tsv.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%s\t%.3f\t%.3f\t%.3f\n" % (lang, original_text, classimb, feat_type,model_name,use_emotions, use_hashtags,use_empath, use_perspective, use_hurtlex, rnn_dim,att_dim, metr_dict['avg_f'],metr_dict['avg_p'],metr_dict['avg_r'],metr_dict['avg_acc'],metr_dict['std_f'],metr_dict['std_acc'],conf_dict_com["test_mode"], conf_dict_com['LEARN_RATE'], conf_dict_com['dropO1'], conf_dict_com['dropO2']))
 	lines = prep_write_lines(metr_dict, prob_type)
 	for line in lines:
 		print(line)

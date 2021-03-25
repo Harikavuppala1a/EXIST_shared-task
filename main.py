@@ -7,6 +7,8 @@ from neural_approaches import *
 from bert_serving.client import ConcurrentBertClient
 import h5py
 import gensim.models as gsm
+from features import *
+import csv
 
 # from TraditionalML_LP import save_emojifeats, save_hashfeats
 
@@ -35,9 +37,9 @@ if os.path.isfile(tsv_path):
 else:
     f_tsv = open(tsv_path, 'w')
     if conf_dict_com['prob_type'] == "multi-class":
-        f_tsv.write("language\toriginaltext\tclass_imb\tfeature\tmodel\tuse_emotions\tuse_hashtags\trnn_dim\tatt_dim\tavg_f_we\tavg_f_ma\tavg_f_mi\tavg_acc\tavg_p_we\tavg_p_ma\tavg_p_mi\tavg_r_we\tavg_r_ma\tavg_r_mi\tstd_f_we\ttest_mode\tlearnrate\tdrop1\tdrop2\n") 
+        f_tsv.write("language\toriginaltext\tclass_imb\tfeature\tmodel\tuse_emotions\tuse_hashtags\tuse_empath\tuse_perpective\tuse_hurtlex\trnn_dim\tatt_dim\tavg_f_we\tavg_f_ma\tavg_f_mi\tavg_acc\tavg_p_we\tavg_p_ma\tavg_p_mi\tavg_r_we\tavg_r_ma\tavg_r_mi\tstd_f_we\ttest_mode\tlearnrate\tdrop1\tdrop2\n") 
     else:
-        f_tsv.write("language\toriginaltext\tclass_imb\tfeature\tmodel\tuse_emotions\tuse_hashtags\trnn_dim\tatt_dim\tavg_f\tavg_p\tavg_r\tavg_ac\tstd_f\ttest_mode\tlearnrate\tdrop1\tdrop2\n") 
+        f_tsv.write("language\toriginaltext\tclass_imb\tfeature\tmodel\tuse_emotions\tuse_hashtags\tuse_empath\tuse_perpective\tuse_hurtlex\trnn_dim\tatt_dim\tavg_f\tavg_p\tavg_r\tavg_ac\tstd_f\ttest_mode\tlearnrate\tdrop1\tdrop2\n") 
 
 if conf_dict_com['prob_type'] == "binary":
     data_dict['NUM_CLASSES'] = data_dict['NUM_CLASSES_sd']
@@ -79,6 +81,34 @@ if conf_dict_com['use_hashtags']:
 else:
     hashtag_array =[]
 
+if conf_dict_com['use_empathfeats']:
+    s_filename = ("%sempath_enc_feat~%s.h5" % (conf_dict_com['save_folder_name'],conf_dict_com['language']))
+    if not os.path.isfile(s_filename):
+        save_empathfeats(data_dict,s_filename)
+    with h5py.File(s_filename, "r") as hf:
+        empath_array = hf['feats'][:data_dict['test_en_ind']]
+else:
+    empath_array = []
+
+if conf_dict_com['use_perspectivefeats']:
+    s_filename = ("%sperspective_enc_feat~%s.h5" % (conf_dict_com['save_folder_name'],conf_dict_com['language']))
+    if not os.path.isfile(s_filename):
+        save_perspectivefeats(data_dict,s_filename)
+    with h5py.File(s_filename, "r") as hf:
+        perspective_array = hf['feats'][:data_dict['test_en_ind']]
+else:
+    perspective_array = []
+
+if conf_dict_com['use_hurtlexfeats']:
+    s_filename = ("%shurtlex_enc_feat~%s.h5" % (conf_dict_com['save_folder_name'],conf_dict_com['language']))
+    categories = ["ps", "pa", "ddf", "ddp", "asf", "pr", "om", "qas"]
+    LEN = len(categories)
+    if not os.path.isfile(s_filename):
+        save_hurtlexfeats(LEN,categories,s_filename,data_dict)
+    with h5py.File(s_filename, "r") as hf:
+        hurtlex_array = hf['feats'][:data_dict['test_en_ind']]
+
+
 print (data_dict['NUM_CLASSES'])
 metr_dict = init_metr_dict(conf_dict_com['prob_type'])
 feat_type_str = ""
@@ -105,7 +135,7 @@ for conf_dict in conf_dict_list:
                                                     for thresh in conf_dict["threshes"]:
                                                         startTime = time.time()
                                                         info_str = "model: %s, word_feats = %s, sent_enc_feats = %s, classi_probs_label_info = %s, prob_trans_type = %s, class_imb_flag = %s, num_cnn_filters = %s, cnn_kernel_set = %s, rnn_type = %s, rnn_dim = %s, att_dim = %s, max_pool_k_val = %s, stack_rnn_flag = %s, thresh = %s, test mode = %s" % (model_type,word_feat_str,sent_enc_feat_str,classi_probs_label_str,prob_trans_type,class_imb_flag,num_cnn_filters,cnn_kernel_set,rnn_type,rnn_dim,att_dim,max_pool_k_val,stack_rnn_flag, thresh, conf_dict_com["test_mode"])
-                                                        fname_part = ("%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s" % (model_type,word_feat_str,sent_enc_feat_str,classi_probs_label_str,prob_trans_type,class_imb_flag,num_cnn_filters,cnn_kernel_set_str,rnn_type,rnn_dim,att_dim,max_pool_k_val,stack_rnn_flag, conf_dict_com['use_emotions'], conf_dict_com['use_hashtags'], conf_dict_com['original_text'], conf_dict_com["test_mode"]))
+                                                        fname_part = ("%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s~%s" % (model_type,word_feat_str,sent_enc_feat_str,classi_probs_label_str,prob_trans_type,class_imb_flag,num_cnn_filters,cnn_kernel_set_str,rnn_type,rnn_dim,att_dim,max_pool_k_val,stack_rnn_flag, conf_dict_com['use_emotions'], conf_dict_com['use_hashtags'], conf_dict_com['use_empathfeats'], conf_dict_com['use_perspectivefeats'], conf_dict_com['original_text'], conf_dict_com["test_mode"]))
                                                         pred_vals_across_runs = []
                                                         for run_ind in range(conf_dict_com["num_runs"]):
                                                             print('run: %s; %s\n' % (run_ind, info_str))
@@ -119,7 +149,7 @@ for conf_dict in conf_dict_list:
                                                                 # print (trainY_list)
                                                                 for m_ind, (loss_func, cw, out_vec_size, trainY) in enumerate(zip(loss_func_list, cw_list, out_vec_size_list, trainY_list)):
                                                                     # print ("in loop")
-                                                                    mod_op, att_op = train_predict(word_feats, sent_enc_feats, trainY, data_dict, model_type, num_cnn_filters, rnn_type, fname_part, loss_func, cw, nonlin, out_vec_size, rnn_dim, att_dim, max_pool_k_val,stack_rnn_flag,cnn_kernel_set, m_ind, run_ind, conf_dict_com["save_folder_name"], conf_dict_com["use_saved_model"], conf_dict_com["gen_att"], conf_dict_com["LEARN_RATE"], conf_dict_com["dropO1"], conf_dict_com["dropO2"], conf_dict_com["BATCH_SIZE"], conf_dict_com["EPOCHS"], conf_dict_com["save_model"], conf_dict_com["save_trained_mod"],conf_dict_com['n_fine_tune_layers'],conf_dict_com['bert_path'],conf_dict_com['output_representation'],conf_dict_com['bert_trainable'], conf_dict_com['use_emotions'],emoji_array, conf_dict_com['use_hashtags'], hashtag_array)
+                                                                    mod_op, att_op = train_predict(word_feats, sent_enc_feats, trainY, data_dict, model_type, num_cnn_filters, rnn_type, fname_part, loss_func, cw, nonlin, out_vec_size, rnn_dim, att_dim, max_pool_k_val,stack_rnn_flag,cnn_kernel_set, m_ind, run_ind, conf_dict_com["save_folder_name"], conf_dict_com["use_saved_model"], conf_dict_com["gen_att"], conf_dict_com["LEARN_RATE"], conf_dict_com["dropO1"], conf_dict_com["dropO2"], conf_dict_com["BATCH_SIZE"], conf_dict_com["EPOCHS"], conf_dict_com["save_model"], conf_dict_com["save_trained_mod"],conf_dict_com['n_fine_tune_layers'],conf_dict_com['bert_path'],conf_dict_com['output_representation'],conf_dict_com['bert_trainable'], conf_dict_com['use_emotions'],emoji_array, conf_dict_com['use_hashtags'], hashtag_array, conf_dict_com['use_empathfeats'],empath_array,conf_dict_com['use_perspectivefeats'],perspective_array,conf_dict_com['use_hurtlexfeats'], hurtlex_array )
                                                                     mod_op_list.append((mod_op, att_op))
                                                                 mod_op_list_save_list.append(mod_op_list) 
                                                             pred_vals, true_vals, metr_dict = evaluate_model(mod_op_list, data_dict, bac_map, prob_trans_type, metr_dict, thresh, conf_dict_com['gen_att'], conf_dict_com["output_folder_name"], ("%s~%d" % (fname_part,run_ind)), conf_dict_com['classi_probs_label_info'])
@@ -129,7 +159,7 @@ for conf_dict in conf_dict_list:
                                                         # print(metr_dict)
                                                         metr_dict = aggregate_metr(metr_dict, conf_dict_com["num_runs"], data_dict['prob_type'])
                                                         # write_results(metr_dict, f_res, f_tsv, data_dict['prob_type'], model_type,word_feat_str,sent_enc_feat_str,classi_probs_label_str,prob_trans_type,class_imb_flag,num_cnn_filters,cnn_kernel_set_str,thresh,rnn_dim,att_dim,max_pool_k_val,stack_rnn_flag,rnn_type,conf_dict_com)
-                                                        write_results(conf_dict_com['language'], conf_dict_com['original_text'], class_imb_flag, sent_enc_feat_str,conf_dict_com['model'],conf_dict_com['use_emotions'],conf_dict_com['use_hashtags'], metr_dict,f_tsv, conf_dict_com['prob_type'],conf_dict_com,rnn_dim,att_dim)
+                                                        write_results(conf_dict_com['language'], conf_dict_com['original_text'], class_imb_flag, sent_enc_feat_str,conf_dict_com['model'],conf_dict_com['use_emotions'],conf_dict_com['use_hashtags'],conf_dict_com['use_empathfeats'], conf_dict_com['use_perspectivefeats'], conf_dict_com['use_hurtlexfeats'], metr_dict,f_tsv, conf_dict_com['prob_type'],conf_dict_com,rnn_dim,att_dim)
                                                         if conf_dict_com['gen_insights']:                                                  
                                                             insights_results_lab(pred_vals_across_runs, true_vals, data_dict['lab'][0:data_dict['train_en_ind']], fname_part, conf_dict_com["output_folder_name"],conf_dict_com["num_runs"],data_dict['NUM_CLASSES'],data_dict['FOR_LMAP'] )
                                                             insights_results(pred_vals_across_runs[0], true_vals, data_dict['text'][data_dict['test_st_ind']:data_dict['test_en_ind']], data_dict['text_sen'][data_dict['test_st_ind']:data_dict['test_en_ind']], fname_part, conf_dict_com["output_folder_name"])

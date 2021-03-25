@@ -2,7 +2,7 @@ import numpy as np
 import keras
 
 class TrainGenerator(keras.utils.Sequence):
-    def __init__(self, list_IDs, labels, word_feats, sent_feats, data_dict, batch_size,use_emojis,emoji_array,use_hashtags, hashtag_array):
+    def __init__(self, list_IDs, labels, word_feats, sent_feats, data_dict, batch_size,use_emojis,emoji_array,use_hashtags, hashtag_array,use_empath, empath_array,use_perspective, perspective_array,use_hurtlex,hurtlex_array):
         self.word_feats = word_feats
         self.sent_feats = sent_feats
         self.data_dict = data_dict
@@ -11,9 +11,16 @@ class TrainGenerator(keras.utils.Sequence):
         self.labels = labels
         self.list_IDs = list_IDs
         self.use_emojis = use_emojis
-        self. emoji_array = emoji_array
+        self.emoji_array = emoji_array
         self.use_hashtags= use_hashtags
-        self. hashtag_array = hashtag_array
+        self.hashtag_array = hashtag_array
+        self.use_empath = use_empath
+        self.empath_array = empath_array
+        self.use_perspective = use_perspective
+        self.perspective_array  = perspective_array
+        self.use_hurtlex = use_hurtlex
+        self.hurtlex_array = hurtlex_array
+
         # print (len(self.list_IDs))
 
     def __len__(self):
@@ -54,12 +61,21 @@ class TrainGenerator(keras.utils.Sequence):
 
         if self.use_hashtags:
             X_inputs.append(self.hashtag_array[list_IDs_temp])
+
+        if self.use_empath:
+            X_inputs.append(self.empath_array[list_IDs_temp])                  # X_inputs.append(self.conf_scores_array[list_IDs_temp])
+
+        if self.use_perspective:
+            X_inputs.append(self.perspective_array[list_IDs_temp])
+
+        if self.use_hurtlex:
+            X_inputs.append(self.hurtlex_array[list_IDs_temp])
             
 
         return X_inputs, self.labels[list_IDs_temp]
 
 class TestGenerator(keras.utils.Sequence):
-    def __init__(self, list_IDs, word_feats, sent_feats, data_dict, batch_size, use_emojis,emoji_array,use_hashtags, hashtag_array):
+    def __init__(self, list_IDs, word_feats, sent_feats, data_dict, batch_size, use_emojis,emoji_array,use_hashtags, hashtag_array,use_empath, empath_array,use_perspective, perspective_array,use_hurtlex,hurtlex_array):
         self.word_feats = word_feats
         self.sent_feats = sent_feats
         self.data_dict = data_dict
@@ -70,6 +86,12 @@ class TestGenerator(keras.utils.Sequence):
         self. emoji_array = emoji_array
         self.use_hashtags= use_hashtags
         self. hashtag_array = hashtag_array
+        self.use_empath = use_empath
+        self.empath_array = empath_array
+        self.use_perspective = use_perspective
+        self.perspective_array  = perspective_array
+        self.use_hurtlex = use_hurtlex
+        self.hurtlex_array = hurtlex_array
 
     def __len__(self):
         return int(np.ceil(len(self.list_IDs) / self.batch_size))
@@ -102,5 +124,14 @@ class TestGenerator(keras.utils.Sequence):
 
         if self.use_hashtags:
             X_inputs.append(self.hashtag_array[list_IDs_temp])
+
+        if self.use_empath:
+            X_inputs.append(self.empath_array[list_IDs_temp])                  # X_inputs.append(self.conf_scores_array[list_IDs_temp])
+
+        if self.use_perspective:
+            X_inputs.append(self.perspective_array[list_IDs_temp])
+            
+        if self.use_hurtlex:
+            X_inputs.append(self.hurtlex_array[list_IDs_temp])
 
         return X_inputs

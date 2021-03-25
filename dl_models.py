@@ -227,7 +227,7 @@ def gen_tune_bert_model(sen_f_input,comp_dim,rnn_dim,att_dim,n_fine_tune_layers,
     print (bert_output.shape)
     return bert_output
 
-def flat_fuse(word_cnt_post, rnn_dim, att_dim, word_feats, sen_enc_feats, dropO1, dropO2, nonlin, out_vec_size, rnn_type, stack_rnn_flag, num_cnn_filters, max_pool_k_val, kernel_sizes,n_fine_tune_layers,tf_hub_path, output_representation, bert_trainable,use_emotions, emoji_array,use_hashtags, hashtag_array):
+def flat_fuse(word_cnt_post, rnn_dim, att_dim, word_feats, sen_enc_feats, dropO1, dropO2, nonlin, out_vec_size, rnn_type, stack_rnn_flag, num_cnn_filters, max_pool_k_val, kernel_sizes,n_fine_tune_layers,tf_hub_path, output_representation, bert_trainable,use_emotions, emoji_array,use_hashtags, hashtag_array,use_empath, empath_array,use_perspective,perspective_array,use_hurtlex,hurtlex_array):
     p_dict = {}
     model_inputs = []
     att_outputs = []
@@ -269,13 +269,28 @@ def flat_fuse(word_cnt_post, rnn_dim, att_dim, word_feats, sen_enc_feats, dropO1
     if use_emotions:
         emo_input = Input(shape=(emoji_array.shape[-1],))
         model_inputs.append(emo_input)
-        sen_f_dr1 = Dropout(dropO1)(emo_input)
-        post_vec_list.append(sen_f_dr1)
+        # sen_f_dr1 = Dropout(dropO1)(emo_input)
+        post_vec_list.append(emo_input)
     if use_hashtags:
         hash_input = Input(shape=(hashtag_array.shape[-1],))
         model_inputs.append(hash_input)
-        sen_f_dr1 = Dropout(dropO1)(hash_input)
-        post_vec_list.append(sen_f_dr1)
+        # sen_f_dr1 = Dropout(dropO1)(hash_input)
+        post_vec_list.append(hash_input)
+    if use_empath:
+        empath_input = Input(shape=(empath_array.shape[-1],))
+        model_inputs.append(empath_input)
+        # sen_f_dr1 = Dropout(dropO1)(empath_input)
+        post_vec_list.append(empath_input)
+    if use_perspective:
+        perspective_input = Input(shape=(perspective_array.shape[-1],))
+        model_inputs.append(perspective_input)
+        # sen_f_dr1 = Dropout(dropO1)(perspective_input)
+        post_vec_list.append(perspective_input)
+    if use_hurtlex:
+        hurtlex_input = Input(shape=(hurtlex_array.shape[-1],))
+        model_inputs.append(hurtlex_input)
+        post_vec_list.append(hurtlex_input)
+
     # post_vec_list
     post_vec = concatenate(post_vec_list) if len(post_vec_list) > 1 else post_vec_list[0]
     print(post_vec.shape)
@@ -286,7 +301,7 @@ def flat_fuse(word_cnt_post, rnn_dim, att_dim, word_feats, sen_enc_feats, dropO1
 
 def apply_dense(input_seq, dropO2, post_vec, nonlin, out_vec_size):
     dr2_l = Dropout(dropO2)(post_vec)
-    out_vec = Dense(out_vec_size, activation=nonlin)(post_vec)
+    out_vec = Dense(out_vec_size, activation=nonlin)(dr2_l)
     print (out_vec.shape)
     return Model(input_seq, out_vec), out_vec
 
@@ -379,8 +394,8 @@ def br_binary_loss(weights):
     return br_binary_of
 
 
-def get_model(m_type, word_cnt_post, sent_cnt, word_cnt_sent, word_feats, sen_enc_feats, learn_rate, dropO1, dropO2, num_cnn_filters, rnn_type, loss_func, nonlin, out_vec_size, rnn_dim, att_dim, max_pool_k_val, stack_rnn_flag, kernel_sizes,n_fine_tune_layers,tf_hub_path, output_representation, bert_trainable, use_emotions, emoji_array,use_hashtags, hashtag_array):
-    model, out_vec, att_mod, model_inputs= flat_fuse(word_cnt_post, rnn_dim, att_dim, word_feats, sen_enc_feats, dropO1, dropO2, nonlin, out_vec_size, rnn_type, stack_rnn_flag, num_cnn_filters, max_pool_k_val, kernel_sizes,n_fine_tune_layers,tf_hub_path, output_representation, bert_trainable, use_emotions, emoji_array,use_hashtags, hashtag_array)
+def get_model(m_type, word_cnt_post, sent_cnt, word_cnt_sent, word_feats, sen_enc_feats, learn_rate, dropO1, dropO2, num_cnn_filters, rnn_type, loss_func, nonlin, out_vec_size, rnn_dim, att_dim, max_pool_k_val, stack_rnn_flag, kernel_sizes,n_fine_tune_layers,tf_hub_path, output_representation, bert_trainable, use_emotions, emoji_array,use_hashtags, hashtag_array,use_empath, empath_array,use_perspective,perspective_array,use_hurtlex,hurtlex_array):
+    model, out_vec, att_mod, model_inputs= flat_fuse(word_cnt_post, rnn_dim, att_dim, word_feats, sen_enc_feats, dropO1, dropO2, nonlin, out_vec_size, rnn_type, stack_rnn_flag, num_cnn_filters, max_pool_k_val, kernel_sizes,n_fine_tune_layers,tf_hub_path, output_representation, bert_trainable, use_emotions, emoji_array,use_hashtags, hashtag_array,use_empath, empath_array,use_perspective,perspective_array,use_hurtlex,hurtlex_array)
     # print (model_old.summary())
     print (model.summary())
     adam = optimizers.Adam(lr=learn_rate)

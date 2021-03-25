@@ -33,7 +33,7 @@ def evaluate_model(mod_op_list, data_dict, bac_map, prob_trans_type, metr_dict, 
 
     return pred_vals, true_vals, calc_metrics_print(pred_vals, true_vals, metr_dict, data_dict['NUM_CLASSES'], data_dict['prob_type'])
 
-def train_predict(word_feats, sent_enc_feats, trainY, data_dict, model_type, num_cnn_filters, rnn_type, fname_part, loss_func, class_w, nonlin, out_vec_size, rnn_dim, att_dim, max_pool_k_val, stack_rnn_flag, cnn_kernel_set, m_ind, run_ind, save_folder_name, use_saved_model, gen_att, learn_rate, dropO1, dropO2, batch_size, num_epochs, save_model, save_trained_mod,n_fine_tune_layers,tf_hub_path, output_representation, bert_trainable, use_emotions, emoji_array, use_hashtags, hashtag_array):
+def train_predict(word_feats, sent_enc_feats, trainY, data_dict, model_type, num_cnn_filters, rnn_type, fname_part, loss_func, class_w, nonlin, out_vec_size, rnn_dim, att_dim, max_pool_k_val, stack_rnn_flag, cnn_kernel_set, m_ind, run_ind, save_folder_name, use_saved_model, gen_att, learn_rate, dropO1, dropO2, batch_size, num_epochs, save_model, save_trained_mod,n_fine_tune_layers,tf_hub_path, output_representation, bert_trainable, use_emotions, emoji_array, use_hashtags, hashtag_array, use_empath, empath_array,use_perspective,perspective_array, use_hurtlex,hurtlex_array):
     att_op = None
     fname_mod_op = ("%s%s/iop~%d~%d.pickle" % (save_folder_name, fname_part, m_ind, run_ind))
     if use_saved_model and os.path.isfile(fname_mod_op):
@@ -46,10 +46,10 @@ def train_predict(word_feats, sent_enc_feats, trainY, data_dict, model_type, num
                 with open(fname_att_op, 'rb') as f:
                     att_op = pickle.load(f)
     else:
-        model, att_mod = get_model(model_type, data_dict['max_post_length'], data_dict['max_num_sent'], data_dict['max_words_sent'], word_feats, sent_enc_feats, learn_rate, dropO1, dropO2, num_cnn_filters, rnn_type, loss_func, nonlin, out_vec_size, rnn_dim, att_dim, max_pool_k_val, stack_rnn_flag, cnn_kernel_set,n_fine_tune_layers,tf_hub_path, output_representation, bert_trainable, use_emotions, emoji_array, use_hashtags, hashtag_array)
-        training_generator = TrainGenerator(np.arange(0, data_dict['train_en_ind']), trainY, word_feats, sent_enc_feats, data_dict, batch_size,use_emotions,emoji_array,use_hashtags, hashtag_array)
+        model, att_mod = get_model(model_type, data_dict['max_post_length'], data_dict['max_num_sent'], data_dict['max_words_sent'], word_feats, sent_enc_feats, learn_rate, dropO1, dropO2, num_cnn_filters, rnn_type, loss_func, nonlin, out_vec_size, rnn_dim, att_dim, max_pool_k_val, stack_rnn_flag, cnn_kernel_set,n_fine_tune_layers,tf_hub_path, output_representation, bert_trainable, use_emotions, emoji_array, use_hashtags, hashtag_array,use_empath, empath_array,use_perspective,perspective_array,use_hurtlex,hurtlex_array)
+        training_generator = TrainGenerator(np.arange(0, data_dict['train_en_ind']), trainY, word_feats, sent_enc_feats, data_dict, batch_size,use_emotions,emoji_array,use_hashtags, hashtag_array,use_empath, empath_array,use_perspective,perspective_array,use_hurtlex,hurtlex_array)
         model.fit_generator(generator=training_generator, epochs=num_epochs, shuffle=False, verbose=1, use_multiprocessing=False, workers=1)
-        test_generator = TestGenerator(np.arange(data_dict['test_st_ind'], data_dict['test_en_ind']), word_feats, sent_enc_feats, data_dict, batch_size,use_emotions,emoji_array, use_hashtags, hashtag_array)
+        test_generator = TestGenerator(np.arange(data_dict['test_st_ind'], data_dict['test_en_ind']), word_feats, sent_enc_feats, data_dict, batch_size,use_emotions,emoji_array, use_hashtags, hashtag_array,use_empath, empath_array,use_perspective,perspective_array,use_hurtlex,hurtlex_array)
         mod_op = model.predict_generator(generator=test_generator, verbose=1, use_multiprocessing=False, workers=1)
         if gen_att and (att_mod is not None):
             att_op = att_mod.predict_generator(generator=test_generator, verbose=1, use_multiprocessing=False, workers=1)
