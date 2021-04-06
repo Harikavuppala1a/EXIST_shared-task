@@ -94,9 +94,9 @@ def load_data(filename, data_path, save_path, test_ratio, valid_ratio, rand_stat
 
         raw_tweet_texts.append(tweet_proc.clean(row['text'].replace("\n", " ")))
         clean_data.append(row_clean)
-        emoji_texts = []
+      emoji_texts = []
 
-        for emo_list in emojis:
+      for emo_list in emojis:
           texts = []
           for emoji in emo_list:
             for emot in UNICODE_EMO:
@@ -105,9 +105,9 @@ def load_data(filename, data_path, save_path, test_ratio, valid_ratio, rand_stat
               texts.append(emoji.replace("_", " "))
           emoji_texts.append(texts)
 
-        segmented_hashtags = []
+      segmented_hashtags = []
 
-        for hashset in hashtags:
+      for hashset in hashtags:
           segmented_set = []
           for tag in hashset:
             word = tag[1: ]

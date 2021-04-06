@@ -218,7 +218,7 @@ def gen_tune_bert_model(sen_f_input,comp_dim,rnn_dim,att_dim,n_fine_tune_layers,
 
     if output_representation == "sequence_output":
 
-        bert_output = Bidirectional(LSTM(rnn_dim, return_sequences=(att_dim > 0)))(bert_output)
+        bert_output = Bidirectional(GRU(rnn_dim, return_sequences=(att_dim > 0)))(bert_output)
         if att_dim > 0:
             bert_output, att_w = attLayer_hier(att_dim)(bert_output)
     # print (blstm_l.shape)

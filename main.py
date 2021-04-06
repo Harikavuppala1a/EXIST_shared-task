@@ -66,7 +66,7 @@ if conf_dict_com['simple_cleaning']:
 if conf_dict_com['use_emotions']:
     s_filename = ("%semoji_enc_feat~%s.h5" % (conf_dict_com['save_folder_name'], conf_dict_com['language']))
     if not os.path.isfile(s_filename):
-        save_emojifeats(data_dict,s_filename)
+        save_emojifeats(data_dict,s_filename,sm_to_em_filename)
     with h5py.File(s_filename, "r") as hf:
         emoji_array = hf['feats'][:data_dict['test_en_ind']]
 else:
@@ -101,7 +101,7 @@ else:
 
 if conf_dict_com['use_hurtlexfeats']:
     s_filename = ("%shurtlex_enc_feat~%s.h5" % (conf_dict_com['save_folder_name'],conf_dict_com['language']))
-    categories = ["ps", "pa", "ddf", "ddp", "asf", "pr", "om", "qas"]
+    categories = ["ps", "pa", "ddf", "ddp", "asf", "pr", "om", "qas", "cds"]
     LEN = len(categories)
     if not os.path.isfile(s_filename):
         save_hurtlexfeats(LEN,categories,s_filename,data_dict)

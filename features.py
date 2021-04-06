@@ -25,7 +25,17 @@ def getEmojiEmbeddings(emojiList,dim=300):
   result[:300] = embs
   return result    
 
-def save_emojifeats(data_dict,s_filename):
+def save_emojifeats(data_dict,s_filename,sm_to_em_filename):
+    with open(sm_to_em_filename, 'rb') as f_data:
+        sm_to_em_dict = pickle.load(f_data)
+    for ind,smileys in enumerate(data_dict['smileys']):
+        if len(smileys) > 0:
+            conv_to_em = []
+            for smiley in smileys:
+                if smiley in sm_to_em_dict:
+                    conv_to_em.append(sm_to_em_dict[smiley])
+            data_dict['emojis'][ind] = data_dict['emojis'][ind] + conv_to_em
+
     emoji_feats = np.asarray([getEmojiEmbeddings(i) for i in (data_dict['emojis'])])
     with h5py.File(s_filename, "w") as hf:
         hf.create_dataset('feats', data=emoji_feats)
