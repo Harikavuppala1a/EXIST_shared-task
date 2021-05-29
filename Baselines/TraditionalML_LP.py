@@ -16,12 +16,7 @@ from nltk.tokenize import TweetTokenizer
 import time
 from allennlp.commands.elmo import ElmoEmbedder
 import h5py
-# from sentence_transformers import SentenceTransformer
 import gensim.models as gsm
-# from transformers import AutoTokenizer, AutoModelWithLMHead
-
-# tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/xlm-r-100langs-bert-base-nli-mean-tokens")
-# sent_encoder = SentenceTransformer('xlm-r-100langs-bert-base-nli-mean-tokens')
 
 def get_embedding_weights(filename, sep):
     embed_dict = {}
@@ -50,8 +45,6 @@ def classification_model(X_train, X_test, y_train, y_tested, model_type):
     model = get_model(model_type)
     model.fit(X_train,y_train)
     y_pred = model.predict(X_test)
-    # print (y_pred)
-    # print(y_tested)
     return y_pred, y_tested
 
 def get_model(m_type):
@@ -186,13 +179,7 @@ def train(data_dict, conf_dict_com,feat_type):
     elif feat_type == "elmo":
         emb_size = conf_dict_com['poss_word_feats_emb_dict']['elmo']
         print("using elmo")
-        # ad_word_feats['filepath'] = save_fold_path + 'word_vecs~' + word_feat_name + '/' + str(var_tune) + '/'
         elmo_filepath = "saved/word_vecs~elmo/False/"
-        #print (elmo_filepath)
-        #if not os.path.isfile(conf_dict_com["elmo_filepath"]) :
-         #   os.makedirs(elmo_filepath, exist_ok=True)
-          #  elmo = ElmoEmbedder()
-        #    elmo_save_no_pad(data_dict, elmo, elmo_filepath, poss_word_feats_emb_dict[word_feat_name])
         train_features = get_features(data_dict['train_en_ind'],0,elmo_filepath)
         test_features = get_features(len(data_dict['text'][data_dict['test_st_ind']:data_dict['test_en_ind']]),data_dict['test_st_ind'],elmo_filepath)
 
@@ -230,18 +217,8 @@ def generate_results(train_feat,test_feat,labels,data_testlabs,num_runs,prob_typ
 
 data_dict = load_data(conf_dict_com['filename'], conf_dict_com['data_folder_name'], conf_dict_com['data_train_name'], conf_dict_com['data_test_name'], conf_dict_com['save_folder_name'], conf_dict_com['TEST_RATIO'], conf_dict_com['VALID_RATIO'], conf_dict_com['RANDOM_STATE'], conf_dict_com['language'],  conf_dict_com['prob_type'], conf_dict_com['filename_map_list'],conf_dict_com['test_mode'])    
 
-# feat_type_str = ""
 train_feat, test_feat = train(data_dict,conf_dict_com,conf_dict_com['feat_type'])
 print (train_feat.shape)
-# feat_type_str = feat_type_str + conf_dict_com['feat_type_list'][0]
-# if len(conf_dict_com['feat_type_list']) >1:
-#     for feat_type in conf_dict_com['feat_type_list'][1:]:
-#         feat_type_str = feat_type_str + feat_type
-#         train_features, test_features = train(data_dict,conf_dict_com,feat_type)
-#         train_feat = np.concatenate((train_feat , train_features), axis = 1)
-#         test_feat = np.concatenate((test_feat , test_features), axis = 1)
-#         print (train_feat.shape)
-#         print(test_feat.shape)
 
 if conf_dict_com['prob_type'] == "binary":
     generate_results(train_feat, test_feat,data_dict['task_1_labels'][:data_dict['train_en_ind']], data_dict['task_1_labels'][data_dict['test_st_ind']:data_dict['test_en_ind']],conf_dict_com["num_runs"],conf_dict_com['prob_type'], data_dict['NUM_CLASSES_sd'],conf_dict_com['models'], conf_dict_com)
