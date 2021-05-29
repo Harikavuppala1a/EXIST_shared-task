@@ -1,6 +1,6 @@
 **********
 num_runs = 3
-prob_type = "binary"
+prob_type = "multi-class"
 poss_word_feats_emb_dict = {'glove': 300, 'elmo': 3072, 'bert':768}
 test_mode = True
 MAX_WORDS_SENT = 35
@@ -8,21 +8,38 @@ RANDOM_STATE = 22
 TEST_RATIO = 0.15
 VALID_RATIO = 0.15
 
-lang = "both"
-feat_type = 'wordngrams'
+language= "both"
+feat_type = 'charngrams'
 filename = 'EXIST2021_training.tsv'
-filename_map_list = ['sd_maps.txt', 'sc_maps.txt'
+filename_map = 'sc_maps.txt'
+
+data_train_name = "datadict_both_translated_train.pickle"
+data_test_name = "datadict_translated_test.pickle"
+
 
 MODEL_TYPE = "all"
 models = ['svm','logistic_regression','random_forest','GBT']
-filepath = "../saved_13k/word_vecs~elmo/False/"
+elmo_filepath = 'saved/word_vecs~elmo/False/'
 MAX_FEATURES = 10000
 n_estimators = 100
 c_linear_SVC = 1.0
 class_weight = "balanced"
 
-res_tsv_mc_filename = "tsv_mc.txt"
-res_tsv_b_filename = "tsv_b.txt"
+use_emotions = False
+use_hashtags = False
+use_empathfeats = False
+use_perspectivefeats = False
+use_hurtlexfeats = False
+
+rnn_dim = 0
+att_dim = 0
+LEARN_RATE = 0
+dropO1 = 0
+dropO2 = 0
+
+res_tsv_mc_filename = "tsv_mc_tm.txt"
+res_tsv_b_filename = "tsv_b_tm.txt"
 output_folder_name = "results/"
 data_folder_name = "data/"
 save_folder_name = "saved/"
+filename_map_list = ['sd_maps.txt','sc_maps.txt']

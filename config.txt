@@ -1,0 +1,40 @@
+**********
+task=2
+model_name = 'bilstm_300_600_hueme'
+rnn_dim = 300
+att_dim =600
+
+emoji =   True
+hashtag = True
+empath = True
+perspective = False
+hurtlex =   False
+analysis = True
+
+GPU_ID = '5'
+
+data_train = '../datadict_both_translated_train.pickle'
+data_test = '../datadict_translated_test.pickle'
+
+empath_feats_list = ['sexism','violence', 'money', 'valuable', 'domestic_work', 'hate', 'aggression', 'anticipation', 'crime', 'weakness', 'horror', 'swearing_terms', 'kill', 'sexual', 'cooking', 'exasperation', 'body', 'ridicule', 'disgust', 'anger', 'rage']
+hurtlex_feat_list = ["ps", "pa", "ddf", "ddp", "asf", "pr", "om", "qas", "cds"]
+perspective_len = 10
+
+batch_size = 6
+num_runs = 3
+max_sent_cnt =13
+max_seq_length = 512
+dropout_val = 0.2
+
+features = "bilstm"
+non_linearity = "tanh"
+loss_function = "crossentropy"
+optimizer = "adam"
+
+tsv_path = "newtestresults_task1.txt"
+filename_map_sc = "../sc_maps.txt"
+filename_map_sd = "../sd_maps.txt"
+train_filename = "../EXIST2021_training.tsv"
+test_filename = "../EXIST2021_test_labeled.tsv"
+emoji_filename = '../emoji2vec.bin'
+pre-trained_filename = "../roberta_further_pretraining_unlabelled_data/"
