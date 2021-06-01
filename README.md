@@ -9,7 +9,10 @@ Instructions for using our code:
 * For traditional baselines, run python TraditionalML.py data/config_traditional_ML.txt 
 * To run the proposed methods, run python models.py config.txt. 
 * All the hyperparameters are available in the Tuned hyper-parameters.pdf file.
-* analysis.py - To generate the analysis. class_wise_analysis_chart.py - To generate the class wise F scores. 
+* analysis.py - To generate the analysis. 
+* class_wise_analysis_chart.py - To generate the class wise F scores. 
 * features.py - It has all the linguistic features.
-* load_data.py - To load the data. models.py - It has all the proposed models
-* preprocessing.py - It has code to preprocess the data. translate.py - To translate the spanish posts to english posts.
+* load_data.py - To load the data. 
+* models.py - It has all the proposed models
+* preprocessing.py - It has code to preprocess the data. 
+* translate.py - To translate the spanish posts to english posts.
