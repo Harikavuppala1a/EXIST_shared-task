@@ -1,78 +1,39 @@
-word_feats_l = [[{'emb':'elmo','s_enc':'cnn','m_id':'1'}]];
-sent_enc_feats_l = [[]];
+task=1
+model_name = 'bilstm_300_600_huem'
+rnn_dim = 300
+att_dim =600
 
-rnn_dims = [100]; att_dims = [300];
-num_cnn_filters = [100]; max_pool_k_vals = [1];
+emoji =   False
+hashtag = False
+empath = True
+perspective = False
+hurtlex =   True
+analysis = True
 
-prob_trans_types = ["binary"]; class_imb_flags = [True]; model_types = ["flat"]; 
-rnn_types = ['lstm']; stack_rnn_flags = [False]; threshes = [0]; cnn_kernel_sets = [[2,3,4]];
-**********
-language = "both"
-prob_type = "binary"
-test_mode = True
+GPU_ID = '5'
 
-data_train_name = "datadict_both_translated_train.pickle"
-data_test_name = "datadict_translated_test.pickle"
+data_train = '../datadict_both_translated_train.pickle'
+data_test = '../datadict_translated_test.pickle'
 
-use_emotions =  False
-use_hashtags = False
-use_empathfeats = False
-use_perspectivefeats = False
-original_text = False
-simple_cleaning = False
-use_hurtlexfeats = False
+empath_feats_list = ['sexism','violence', 'money', 'valuable', 'domestic_work', 'hate', 'aggression', 'anticipation', 'crime', 'weakness', 'horror', 'swearing_terms', 'kill', 'sexual', 'cooking', 'exasperation', 'body', 'ridicule', 'disgust', 'anger', 'rage']
+hurtlex_feat_list = ["ps", "pa", "ddf", "ddp", "asf", "pr", "om", "qas", "cds"]
+perspective_len = 10
 
-
-gen_att = False 
-gen_inst_res = False
-gen_insights = True
-
-GPU_ID = '1'
-
-save_trained_mod = True
-
-use_saved_model = True 
-save_model = True
-
-use_saved_sent_enc_feats = True
-save_sent_enc_feats = True
-
-use_saved_word_feats = True
-save_word_feats = True
-
-use_saved_data_stuff = True 
-save_data_stuff = True
-
-poss_sent_enc_feats_emb_dict = {'bert': 768,'tbert':768}
-poss_word_feats_emb_dict = {'elmo': 3072}
-
-classi_probs_label_info = None
-classi_probs_label_str = None
-dropO1 = 0.25
-dropO2 = 0.25
-LEARN_RATE = 0.001
-
-BATCH_SIZE = 64
-EPOCHS = 10
+batch_size = 6
 num_runs = 3
+max_sent_cnt =13
+max_seq_length = 512
+dropout_val = 0.2
 
-MAX_WORDS_SENT = 35
-RANDOM_STATE = 22
-TEST_RATIO = 0.15
-VALID_RATIO = 0.15
+features = "bilstm"
+non_linearity = "tanh"
+loss_function = "crossentropy"
+optimizer = "adam"
 
-bert_max_seq_len = 256
-bert_path = "saved/tbert-hubmodule"
-tbert_paths = {"config_path" : "../bert_EXIST/multi_cased_L-12_H-768_A-12/bert_config.json", "vocab_path" : "../bert_EXIST/multi_cased_L-12_H-768_A-12/vocab.txt", "ckpt_path" : "../bert_EXIST/tmp/pretraining_output/model.ckpt-100000"}
-n_fine_tune_layers = 3
-output_representation = "sequence_output"
-bert_trainable = True
-
-lang = "both"
-filename = 'EXIST2021_training.tsv'
-filename_map_list = ['sd_maps.txt','sc_maps.txt']
-res_tsv_mc_filename = "tsv_mc.txt"
-res_tsv_b_filename = "tsv_b.txt"
-output_folder_name = "results/"
-data_folder_name = "data/"
-save_folder_name = "saved/"
+tsv_path = "newtestresults_task1.txt"
+filename_map_sc = "../sc_maps.txt"
+filename_map_sd = "../sd_maps.txt"
+train_filename = "../EXIST2021_training.tsv"
+test_filename = "../EXIST2021_test_labeled.tsv"
+emoji_filename = '../emoji2vec.bin'
+pre-trained_filename = "../roberta_further_pretraining_unlabelled_data/"
